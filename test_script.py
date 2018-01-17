@@ -6,13 +6,6 @@ Created on Wed Dec 20 13:31:17 2017
 @author: anup
 """
 
-import os
-print (os.getcwd())
-wdr = '/home/anup/03_test_scripts/04_wolters_kluwer'
-os.chdir(wdr)
-del wdr
-print (os.getcwd())
-
 import time
 start_time = time.time()
 from html.parser import HTMLParser
@@ -39,8 +32,8 @@ def html_to_text(html):
     
 
 import pandas as pd
-dataset = pd.read_csv('kb.csv')
-dataset = dataset.iloc[:, [17,21,22,28,29]]
+dataset = pd.read_csv('kbarticles_20180116.csv')
+dataset = dataset.iloc[:, [17,21,22,29]]
 
 import numpy as np
 import re
@@ -61,14 +54,14 @@ dataset['tokenized_title'] = dataset['tokenized_title'].apply(lambda x: list(set
 
 
 #html processing starts here
-dataset['parsed_html'] = dataset.details__c.apply(html_to_text)
-dataset['parsed_html'].fillna('', inplace=True)
-dataset['parsed_html'] = dataset['parsed_html'].str.replace('\n', ' ')
-dataset['parsed_html'] = dataset['parsed_html'].str.replace('\t', ' ')
-dataset['parsed_html'] = dataset['parsed_html'].str.replace('-', '')
-dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub('[^A-Za-z0-9]+', ' ', x))
-dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub(r'Resolution.+', '', x))
-dataset['parsed_html'] = dataset.parsed_html.apply(lambda x: x.lower())
+#dataset['parsed_html'] = dataset.details__c.apply(html_to_text)
+#dataset['parsed_html'].fillna('', inplace=True)
+#dataset['parsed_html'] = dataset['parsed_html'].str.replace('\n', ' ')
+#dataset['parsed_html'] = dataset['parsed_html'].str.replace('\t', ' ')
+#dataset['parsed_html'] = dataset['parsed_html'].str.replace('-', '')
+#dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub('[^A-Za-z0-9]+', ' ', x))
+#dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub(r'Resolution.+', '', x))
+#dataset['parsed_html'] = dataset.parsed_html.apply(lambda x: x.lower())
 #html processing ends here
 
 
