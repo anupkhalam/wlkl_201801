@@ -42,7 +42,7 @@ def html_to_text(html):
 
 
 dataset = pd.read_csv('kbarticles_20180116.csv')
-dataset = dataset.iloc[:, [17,21,22,29]]
+dataset = dataset.iloc[:, [17,21,22,28,29]]
 stop_words = set(stopwords.words("english"))
 
 
@@ -59,14 +59,14 @@ dataset['tokenized_title'] = dataset['tokenized_title'].apply(lambda x: list(set
 
 
 #html processing starts here
-#dataset['parsed_html'] = dataset.details__c.apply(html_to_text)
-#dataset['parsed_html'].fillna('', inplace=True)
-#dataset['parsed_html'] = dataset['parsed_html'].str.replace('\n', ' ')
-#dataset['parsed_html'] = dataset['parsed_html'].str.replace('\t', ' ')
-#dataset['parsed_html'] = dataset['parsed_html'].str.replace('-', '')
-#dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub('[^A-Za-z0-9]+', ' ', x))
-#dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub(r'Resolution.+', '', x))
-#dataset['parsed_html'] = dataset.parsed_html.apply(lambda x: x.lower())
+dataset['parsed_html'] = dataset.details__c.apply(html_to_text)
+dataset['parsed_html'].fillna('', inplace=True)
+dataset['parsed_html'] = dataset['parsed_html'].str.replace('\n', ' ')
+dataset['parsed_html'] = dataset['parsed_html'].str.replace('\t', ' ')
+dataset['parsed_html'] = dataset['parsed_html'].str.replace('-', '')
+dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub('[^A-Za-z0-9]+', ' ', x))
+dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub(r'Resolution.+', '', x))
+dataset['parsed_html'] = dataset.parsed_html.apply(lambda x: x.lower())
 #html processing ends here
 
 
@@ -125,14 +125,10 @@ dataset['tokenized_entry'] = dataset['tokenized_entry'].apply(lambda x: list(set
 
 
 # processing prep & init starts here
-dataset['word_count'] = 0
-dataset['article_num_sel'] = 0
 dataset['tokenized_entry_string'] = ''
 dataset['token_length'] = ''
 dataset['diagnostic_number'] = 0
-dataset['temp'] = 0
 counter_1 = 0
-counter_2 = 0
 # processing prep & init ends here
 
 
@@ -145,20 +141,6 @@ for index, row in dataset.iterrows():
     tokenized_entry_list = row['tokenized_entry']
     tokenized_entry_str = ' '.join(tokenized_entry_list)
     dataset.loc[counter_1,'tokenized_entry_string'] = tokenized_entry_str
-    for word in word_list:
-        dataset['temp'] = dataset.tokenized_entry.apply(lambda x: x.count(str(word)))
-        dataset['word_count'] = dataset['word_count'].add(dataset['temp'])
-    highest_value_row = abs(np.asscalar(np.int16(dataset['word_count'].idxmax())))
-    
-    
-    # logic to forcefully match the row for multiple article number starts here
-#    if dataset.loc[counter_1,'word_count'] == dataset['word_count'].max():
-#        dataset.loc[counter_1,'article_num_sel'] = int(dataset.loc[counter_1,'articlenumber'])
-#        counter_2 += 1
-#    else:
-#        dataset.loc[counter_1,'article_num_sel'] = int(dataset.loc[highest_value_row,'articlenumber'])
-    dataset.loc[counter_1,'article_num_sel'] = int(dataset.loc[highest_value_row,'articlenumber'])
-    # logic to forcefully match the row for multiple article number starts here
     
     
     #adding column for diagonostic message starts here
@@ -173,17 +155,13 @@ for index, row in dataset.iterrows():
     #adding column for diagonostic message ends here
     
     
-    # post processing memoery cleaning starts here
-    del word_list, word, highest_value_row, tokenized_entry_list, tokenized_entry_str
-    dataset['word_count'] = 0
-    dataset['temp'] = 0
+    # post processing memory cleaning starts here
+    del word_list, tokenized_entry_list, tokenized_entry_str
     counter_1 +=1
     # post processing memoery cleaning ends here
     
 
 #cleaning the dataset for better view starts here
-dataset = dataset.drop('word_count', 1)
-dataset = dataset.drop('temp', 1)
 print("--- %s seconds ---" % (time.time() - start_time))
 #cleaning the dataset for better view ends here
 # logic for iteration ends here
@@ -191,13 +169,14 @@ print("--- %s seconds ---" % (time.time() - start_time))
 
 #selecting columns to write to csv file starts here
 dataset_dup_remd = dataset.drop_duplicates(subset=['articlenumber'], keep='first')
-dataset_required = dataset_dup_remd.iloc[:, [0,1,2,4,7,9,10,11]]
+column_list = ['title','summary','articlenumber','parsed_html','tokenized_entry','tokenized_entry_string','input_method__c','token_length','diagnostic_number']
+dataset_required = dataset_dup_remd[column_list]
 #selecting columns to write to csv file ends here
 
 
 #finalizing the file name & path starts here
+i = 0
 while True:
-    i = 0
     out_file_name = str('kb_repo/' + out_file_name_part_1 + str(i) + '.csv')
     if os.path.exists(out_file_name):
         i+=1
@@ -212,15 +191,5 @@ while True:
 dataset_required.to_csv(out_file_name, index=False)
 # writing to csv file ends here
 
-
-# perofrmance check starts here
-dataset['check'] = np.where(dataset['articlenumber'] == dataset['article_num_sel'], 'yes', 'no')
-dataset['check'].value_counts()
-# perofrmance check ends here
-
-
-# outlier identification starts here
-dataset['article_num_sel'].value_counts()
-# outlier identification ends here
 
 
