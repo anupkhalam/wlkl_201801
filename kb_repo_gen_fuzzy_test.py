@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 import re
 import os.path
-from nltk.corpus import stopwords
+from fuzzywuzzy import process, fuzz
 start_time = time.time()
 
 
@@ -22,34 +22,41 @@ in_file_name_part_1 = 'kb_tit_sum_inp_v_'
 
 i = 1
 while True:
-    in_file_name = str('kb_repo/' + 'loc_' + in_file_name_part_1 + str(i) + '.csv')
+    in_file_name = str('kb_repo/' + in_file_name_part_1 + str(i) + '.csv')
     if os.path.exists(in_file_name):
         i+=1
     else:
         i-=1
-        in_file_name = str('kb_repo/' +  'loc_' + in_file_name_part_1 + str(i) + '.csv')
+        in_file_name = str('kb_repo/' + 'loc_' + in_file_name_part_1 + str(i) + '.csv')
         break
 
 #get the latest repo ends here
 
 
 dataset = pd.read_csv(in_file_name)
-dataset = dataset[['title','articlenumber','tokenized_entry_string','tokenized_entry']]
-del i,in_file_name,in_file_name_part_1
-stop_words = set(stopwords.words("english"))
+df01 = dataset[['articlenumber','tokenized_entry_string']]
+df02 = dataset[['tokenized_title_str']]
+del i,in_file_name,in_file_name_part_1, dataset
 
 
-#user_input processing starts here
-dataset['tokenized_title'] = dataset['title'].str.replace('\n', ' ')
-dataset['tokenized_title'] = dataset['tokenized_title'].str.replace('\t', ' ')
-dataset['tokenized_title'] = dataset['tokenized_title'].str.replace('-', '')
-dataset['tokenized_title'] = dataset['tokenized_title'].map(lambda x: re.sub('[^A-Za-z0-9]+', ' ', x))
-dataset['tokenized_title'] = dataset.tokenized_title.apply(lambda x: x.lower())
-dataset['tokenized_title'] = dataset.tokenized_title.apply(lambda x: x.split())
-dataset['tokenized_title'] = dataset['tokenized_title'].apply(lambda x: [item for item in x if item not in stop_words])
-dataset['tokenized_title'] = dataset['tokenized_title'].apply(lambda x: list(set(x)))
-#user_input processing ends here
+def fuzzy_match(x, choices, scorer, cutoff):
+    return process.extractOne(x, choices=choices, scorer=scorer, score_cutoff=cutoff)
 
+matching_results = df02.loc[0:, 'tokenized_title_str'].apply(
+    fuzzy_match,
+    args=(
+        df01.loc[:, 'tokenized_entry_string'], 
+        fuzz.ratio,
+        80
+    )
+)
+
+match = process.extractOne(
+    df02.loc[0, 'tokenized_title_str'], 
+    choices=df01.loc[:, 'tokenized_entry_string'], 
+    scorer=fuzz.ratio,
+    score_cutoff=80
+)[0]
 
 # processing prep & init starts here
 dataset['word_count'] = 0
@@ -79,10 +86,6 @@ for index, row in dataset.iterrows():
 #        dataset.loc[counter_1,'article_num_sel'] = int(dataset.loc[highest_value_row,'articlenumber'])
     dataset.loc[counter_1,'article_num_sel'] = int(dataset.loc[highest_value_row,'articlenumber'])
     # logic to forcefully match the row for multiple article number starts here
-    dataset.loc[counter_1,'score'] = int(dataset.loc[highest_value_row,'word_count'])
-    dataset.loc[counter_1,'total_words'] = len(word_list)
-    dataset.loc[counter_1,'match_ratio'] = (int(dataset.loc[highest_value_row,'word_count']))/(len(word_list))
-
     
     
     # post processing memoery cleaning starts here
@@ -105,7 +108,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 dataset['check'] = np.where(dataset['articlenumber'] == dataset['article_num_sel'], 'yes', 'no')
 dataset['check'].value_counts()
 # perofrmance check ends here
-dataset.to_csv('report1.csv', index=False)
+
 
 # outlier identification starts here
 dataset['article_num_sel'].value_counts()
