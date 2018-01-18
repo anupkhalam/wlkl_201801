@@ -126,6 +126,7 @@ out_file_name_part_1 = 'kb_tit_sum_inp_v_'
 
 #concatenated string processing starts here
 dataset['repo_check'] = dataset['repo_check'].str.replace('xxxnovaluesxxx', '')
+dataset = dataset.drop_duplicates(subset=['repo_check'], keep='first')
 dataset['tokenized_repo_check'] = dataset.repo_check.apply(lambda x: x.split())
 dataset['token_length'] = dataset['tokenized_repo_check'].apply(len)
 #concatenated string processing ends here

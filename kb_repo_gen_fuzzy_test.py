@@ -35,6 +35,7 @@ while True:
 
 dataset = pd.read_csv(in_file_name)
 df01 = dataset[['articlenumber','repo_check']]
+df_dict = df01.set_index('repo_check')['articlenumber'].to_dict()
 uq_list = dataset['title_string'].tolist()
 del i,in_file_name,in_file_name_part_1, dataset
 
@@ -57,7 +58,7 @@ for i in range(len(uq_list)):
                                           choices=df01.loc[:, 'repo_check'],
                                           scorer=fuzz.ratio,
                                           score_cutoff=50)[0]
-    df01.loc[i,'article_num_sel'] = int(df01.loc[df01['repo_check'] == matched_question, 'articlenumber'])
+    df01.loc[i,'article_num_sel'] = int(df_dict[matched_question])
     df01.loc[i,'uq_tested'] = uq_list[i]
     matched_question = ''
 

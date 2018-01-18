@@ -10,3 +10,6 @@ dataset['summary_count'] = 0
 dataset['summary_count'] = dataset.summary.apply(lambda x: len(x.split()))
 dataset['summary_count'].mean()
 dataset['summary_count'].max()
+
+import pandas as pd
+df_test = pd.read_csv('kb_repo/loc_kb_tit_sum_inp_v_2.csv')
