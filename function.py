@@ -11,8 +11,9 @@ def article_check(string):
     title_match_string = title_match_string.replace('\n', ' ')
     title_match_string = title_match_string.replace('\t', ' ')
     title_match_string = title_match_string.replace('-', '')
-    title_match_string = title_match_string.replace('many', '')
-    title_match_string = re.sub('[^A-Za-z0-9]+', ' ', title_match_string)
+    title_match_string = title_match_string.replace("'s", "subs1")
+    title_match_string = title_match_string.replace("n't", " not")
+    title_match_string = re.sub('[^A-Za-z0-9\"\']+', ' ', title_match_string)
     title_match_string = title_match_string.lower()
     article_num_selected = list(dataset.loc[dataset['title'] == title_match_string, 'articlenumber'])
     if article_num_selected:
@@ -101,6 +102,13 @@ def article_check(string):
         match_report['best_six_article_numbers'] = best_six_article_numbers
         return match_report
     # match_report prep and sending ends here
+
+import re
+import pandas as pd
+from nltk.corpus import stopwords
+stop_words = set(stopwords.words("english"))
+dataset = pd.read_csv('kb_repo/loc_kb_tit_sum_inp_v_0.csv')
+
 
 k = 'resubmit a rejected return?'
 article_check(k)

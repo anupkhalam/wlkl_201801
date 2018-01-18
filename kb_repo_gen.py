@@ -187,7 +187,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 #selecting columns to write to csv file starts here
 dataset_dup_remd = dataset.drop_duplicates(subset=['articlenumber'], keep='first')
 column_list_loc = ['title','summary','articlenumber','parsed_html','tokenized_entry','tokenized_entry_string','input_method__c','token_length','diagnostic_number','tokenized_title_str']
-column_list_ser = ['articlenumber','tokenized_entry_string','input_method__c','diagnostic_number']
+column_list_ser = ['title','articlenumber','tokenized_entry_string','input_method__c','diagnostic_number']
 dataset_required_loc = dataset_dup_remd[column_list_loc]
 dataset_required_ser = dataset_dup_remd[column_list_ser]
 #selecting columns to write to csv file ends here
