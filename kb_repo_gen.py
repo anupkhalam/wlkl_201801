@@ -14,6 +14,7 @@ import re
 import nltk
 from nltk.corpus import stopwords
 import os.path
+from collections import OrderedDict
 start_time = time.time()
 
 
@@ -46,19 +47,26 @@ dataset = pd.read_csv('kbarticles_20180116.csv')
 dataset = dataset.iloc[:, [17,21,22,28,29]]
 stop_words = set(stopwords.words("english"))
 
+#removing duplicates starts here
+dataset = dataset.drop_duplicates(subset=['articlenumber'], keep='first')
+dataset = dataset.drop_duplicates(subset=['title'], keep='first')
+
+#removing duplicates ends here
+
 
 #user_input processing starts here
-dataset['tokenized_title'] = dataset['title'].str.replace('\n', ' ')
-dataset['tokenized_title'] = dataset['tokenized_title'].str.replace('\t', ' ')
-dataset['tokenized_title'] = dataset['tokenized_title'].str.replace('-', '')
-dataset['tokenized_title'] = dataset['tokenized_title'].str.replace("'s", "subs1")
-dataset['tokenized_title'] = dataset['tokenized_title'].str.replace("n't", " not")
-dataset['tokenized_title'] = dataset['tokenized_title'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
-dataset['tokenized_title'] = dataset.tokenized_title.apply(lambda x: x.lower())
-dataset['tokenized_title'] = dataset.tokenized_title.apply(lambda x: x.split())
-dataset['tokenized_title'] = dataset['tokenized_title'].apply(lambda x: [item for item in x if item not in stop_words])
-dataset['tokenized_title'] = dataset['tokenized_title'].apply(lambda x: list(set(x)))
+dataset['title_string'] = dataset['title'].str.replace('\n', ' ')
+dataset['title_string'] = dataset['title_string'].str.replace('\t', ' ')
+dataset['title_string'] = dataset['title_string'].str.replace('-', '')
+dataset['title_string'] = dataset['title_string'].str.replace("n't", "not")
+dataset['title_string'] = dataset['title_string'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
+dataset['title_string'] = dataset.title_string.apply(lambda x: x.lower())
+dataset['title_string'] = dataset.title_string.apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
+dataset['title_string'] = dataset.title_string.apply(lambda x: ' '.join(OrderedDict((w,w) for w in x.split()).keys()))
 #user_input processing ends here
+
+
+dataset['diagnostic_number'] = dataset['title_string'].apply(lambda x: (re.findall(r"\D(\d{5})\D", x)) if 'diagnostic' in x else 0)
 
 
 #html processing starts here
@@ -67,11 +75,12 @@ dataset['parsed_html'].fillna('', inplace=True)
 dataset['parsed_html'] = dataset['parsed_html'].str.replace('\n', ' ')
 dataset['parsed_html'] = dataset['parsed_html'].str.replace('\t', ' ')
 dataset['parsed_html'] = dataset['parsed_html'].str.replace('-', '')
-dataset['parsed_html'] = dataset['parsed_html'].str.replace("'s", "subs1")
-dataset['parsed_html'] = dataset['parsed_html'].str.replace("n't", " not")
+dataset['parsed_html'] = dataset['parsed_html'].str.replace("n't", "not")
 dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
 dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub(r'Resolution.+', '', x))
 dataset['parsed_html'] = dataset.parsed_html.apply(lambda x: x.lower())
+dataset['parsed_html'] = dataset.parsed_html.apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
+dataset['parsed_html'] = dataset.parsed_html.apply(lambda x: ' '.join(OrderedDict((w,w) for w in x.split()).keys()))
 #html processing ends here
 
 
@@ -80,8 +89,6 @@ dataset['input_method__c'].fillna('xxxnovaluesxxx', inplace=True)
 dataset['input_method__c'] = dataset['input_method__c'].str.replace('\n', ' ')
 dataset['input_method__c'] = dataset['input_method__c'].str.replace('\t', ' ')
 dataset['input_method__c'] = dataset['input_method__c'].str.replace('-', '')
-dataset['input_method__c'] = dataset['input_method__c'].str.replace("'s", "subs1")
-dataset['input_method__c'] = dataset['input_method__c'].str.replace("n't", " not")
 dataset['input_method__c'] = dataset['input_method__c'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
 dataset['input_method__c'] = dataset.input_method__c.apply(lambda x: x.lower())
 #input_method__c processing ends here
@@ -89,32 +96,21 @@ dataset['input_method__c'] = dataset.input_method__c.apply(lambda x: x.lower())
 
 #summary processing starts here
 dataset['summary'].fillna('', inplace=True)
-dataset['summary'] = dataset['summary'].str.replace('\n', ' ')
-dataset['summary'] = dataset['summary'].str.replace('\t', ' ')
-dataset['summary'] = dataset['summary'].str.replace('-', '')
-dataset['summary'] = dataset['summary'].str.replace("'s", "subs1")
-dataset['summary'] = dataset['summary'].str.replace("n't", " not")
-dataset['summary'] = dataset['summary'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
-dataset['summary'] = dataset.summary.apply(lambda x: x.lower())
-dataset['summary'] = dataset.summary.apply(lambda x: ' '.join(x.split()[0:25]))
+dataset['summary_string'] = dataset['summary'].str.replace('\n', ' ')
+dataset['summary_string'] = dataset['summary_string'].str.replace('\t', ' ')
+dataset['summary_string'] = dataset['summary_string'].str.replace('-', '')
+dataset['summary_string'] = dataset['summary_string'].str.replace("n't", "not")
+dataset['summary_string'] = dataset['summary_string'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
+dataset['summary_string'] = dataset.summary_string.apply(lambda x: x.lower())
+dataset['summary_string'] = dataset.summary_string.apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
+dataset['summary_string'] = dataset.summary_string.apply(lambda x: ' '.join(OrderedDict((w,w) for w in x.split()).keys()))
+dataset['summary_string'] = dataset.summary_string.apply(lambda x: ' '.join(x.split()[0:25]))
 #summary processing ends here
-
-
-#title processing starts here
-dataset['title'].fillna('', inplace=True)
-dataset['title'] = dataset['title'].str.replace('\n', ' ')
-dataset['title'] = dataset['title'].str.replace('\t', ' ')
-dataset['title'] = dataset['title'].str.replace('-', '')
-dataset['title'] = dataset['title'].str.replace("'s", "subs1")
-dataset['title'] = dataset['title'].str.replace("n't", " not")
-dataset['title'] = dataset['title'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
-dataset['title'] = dataset.title.apply(lambda x: x.lower())
-#title processing ends here
 
 
 #string concatenation starts here
 # title + summary + input
-dataset['tokenized_entry'] = dataset['title'].map(str) + ' ' + dataset['summary'].map(str) + ' ' + dataset['input_method__c'].map(str)
+dataset['repo_check'] = dataset['title_string'].map(str) + ' ' + dataset['summary_string'].map(str) + ' ' + dataset['input_method__c'].map(str)
 out_file_name_part_1 = 'kb_tit_sum_inp_v_'
 
 # title + summary + html + input
@@ -129,65 +125,16 @@ out_file_name_part_1 = 'kb_tit_sum_inp_v_'
 
 
 #concatenated string processing starts here
-dataset['tokenized_entry'] = dataset['tokenized_entry'].str.replace('xxxnovaluesxxx', '')
-dataset['tokenized_entry'] = dataset.tokenized_entry.apply(lambda x: x.split())
-dataset['tokenized_entry'] = dataset['tokenized_entry'].apply(lambda x: [item for item in x if item not in stop_words])
-dataset['tokenized_entry'] = dataset['tokenized_entry'].apply(lambda x: list(set(x)))
+dataset['repo_check'] = dataset['repo_check'].str.replace('xxxnovaluesxxx', '')
+dataset['tokenized_repo_check'] = dataset.repo_check.apply(lambda x: x.split())
+dataset['token_length'] = dataset['tokenized_repo_check'].apply(len)
 #concatenated string processing ends here
-
-
-# processing prep & init starts here
-dataset['tokenized_entry_string'] = ''
-dataset['tokenized_title_str'] = ''
-dataset['token_length'] = ''
-dataset['diagnostic_number'] = 0
-counter_1 = 0
-# processing prep & init ends here
-
-
-# logic for iteration starts here
-dataset['token_length'] = dataset['tokenized_entry'].apply(len)
-for index, row in dataset.iterrows():
-    print ("counter_1: ",counter_1)
-    word_list = row['tokenized_title']
-    word_list = list(set(word_list))
-    tokenized_entry_list = row['tokenized_entry']
-    tokenized_entry_str = ' '.join(tokenized_entry_list)
-    tokenized_title_list = row['tokenized_title']
-    tokenized_title_str = ' '.join(tokenized_title_list)
-    
-    dataset.loc[counter_1,'tokenized_entry_string'] = tokenized_entry_str
-    dataset.loc[counter_1,'tokenized_title_str'] = tokenized_title_str
-    
-    
-    #adding column for diagonostic message starts here
-    if 'diagnostic' in word_list:
-        diagnostic_title = row['title']
-        diagnostic_num = re.findall(r"\D(\d{5})\D", diagnostic_title)
-        if not diagnostic_num:
-            pass
-        else:
-            dataset.loc[counter_1,'diagnostic_number'] = int(diagnostic_num[0])
-        del diagnostic_title, diagnostic_num
-    #adding column for diagonostic message ends here
-    
-    
-    # post processing memory cleaning starts here
-    del word_list, tokenized_entry_list, tokenized_entry_str, tokenized_title_list, tokenized_title_str
-    counter_1 +=1
-    # post processing memoery cleaning ends here
-    
-
-#cleaning the dataset for better view starts here
-print("--- %s seconds ---" % (time.time() - start_time))
-#cleaning the dataset for better view ends here
-# logic for iteration ends here
 
 
 #selecting columns to write to csv file starts here
 dataset_dup_remd = dataset.drop_duplicates(subset=['articlenumber'], keep='first')
-column_list_loc = ['title','summary','articlenumber','parsed_html','tokenized_entry','tokenized_entry_string','input_method__c','token_length','diagnostic_number','tokenized_title_str']
-column_list_ser = ['title','articlenumber','tokenized_entry_string','input_method__c','diagnostic_number']
+column_list_loc =['title','summary','articlenumber','parsed_html','input_method__c','token_length','diagnostic_number','title_string','repo_check','tokenized_repo_check',]
+column_list_ser = ['title','articlenumber','repo_check','input_method__c','diagnostic_number','tokenized_repo_check']
 dataset_required_loc = dataset_dup_remd[column_list_loc]
 dataset_required_ser = dataset_dup_remd[column_list_ser]
 #selecting columns to write to csv file ends here
@@ -214,7 +161,7 @@ dataset_required_loc.to_csv(out_file_name_loc, index=False)
 dataset_required_ser.to_csv(out_file_name_ser, index=False)
 # writing to csv file ends here
 
-
+print ("Execution time: ", round(time.time()-start_time,3), " seconds")
 
 
 

@@ -57,7 +57,6 @@ dataset['tokenized_title'] = dataset['tokenized_title'].apply(lambda x: list(set
 # processing prep & init starts here
 dataset['word_count'] = 0
 dataset['article_num_sel'] = 0
-dataset['temp'] = 0
 counter_1 = 0
 counter_2 = 0
 # processing prep & init ends here
@@ -72,9 +71,8 @@ for index, row in dataset.iterrows():
     print ("counter_1: ",counter_1)
     word_list = list(row['tokenized_title'])
     for word in word_list:
-        dataset['temp'] = dataset.tokenized_entry.apply(lambda x: x.count(str(word)))
-#        dataset['temp'] = dataset.tokenized_entry_string.apply(lambda x: len(re.findall(r'(?<!\S)'+ word + r'(?!\S)',x, re.IGNORECASE)))
-        dataset['word_count'] = dataset['word_count'].add(dataset['temp'])
+        dataset['word_count'] = dataset['word_count'].add(dataset.tokenized_entry.apply(lambda x: x.count(str(word))))
+#        dataset['word_count'] = dataset['word_count'].add(dataset.tokenized_entry_string.apply(lambda x: len(re.findall(r'(?<!\S)'+ word + r'(?!\S)',x, re.IGNORECASE))))
     highest_value_row = abs(np.asscalar(np.int16(dataset['word_count'].idxmax())))
     
     
@@ -96,7 +94,6 @@ for index, row in dataset.iterrows():
     # post processing memoery cleaning starts here
     del word_list, word, highest_value_row
     dataset['word_count'] = 0
-    dataset['temp'] = 0
     counter_1 +=1
     # post processing memoery cleaning ends here
 
@@ -136,8 +133,8 @@ sys.stdout = filename
 # outlier identification starts here
 print (dataset['check'].value_counts())
 print (dataset['article_num_sel'].value_counts())
-print ("Pre-processing time: ",pre_processing_time," seconds")
-print ("Execution time: ",execution_time," seconds")
-print ("Time required for one respose: ",round(execution_time/47307,2)," seconds")
+print ("Pre-processing time: ",round(pre_processing_time,3)," seconds")
+print ("Execution time: ",round(execution_time,3)," seconds")
+print ("Time required for one respose: ",round(execution_time/47307,3)," seconds")
 # outlier identification ends here
 #writing outputs ends here

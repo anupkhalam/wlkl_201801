@@ -104,6 +104,7 @@ def article_check(string):
     # match_report prep and sending ends here
 
 import re
+import numpy as np
 import pandas as pd
 from nltk.corpus import stopwords
 stop_words = set(stopwords.words("english"))
