@@ -96,6 +96,7 @@ dataset['summary'] = dataset['summary'].str.replace("'s", "subs1")
 dataset['summary'] = dataset['summary'].str.replace("n't", " not")
 dataset['summary'] = dataset['summary'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
 dataset['summary'] = dataset.summary.apply(lambda x: x.lower())
+dataset['summary'] = dataset.summary.apply(lambda x: ' '.join(x.split()[0:25]))
 #summary processing ends here
 
 
@@ -212,6 +213,8 @@ while True:
 dataset_required_loc.to_csv(out_file_name_loc, index=False)
 dataset_required_ser.to_csv(out_file_name_ser, index=False)
 # writing to csv file ends here
+
+
 
 
 

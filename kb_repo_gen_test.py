@@ -7,12 +7,13 @@ Created on Wed Jan 17 13:35:30 2018
 """
 
 import time
+import sys
 import pandas as pd
 import numpy as np
 import re
 import os.path
 from nltk.corpus import stopwords
-start_time = time.time()
+start_time_pre_processing = time.time()
 
 
 #get the latest repo starts here
@@ -43,7 +44,9 @@ stop_words = set(stopwords.words("english"))
 dataset['tokenized_title'] = dataset['title'].str.replace('\n', ' ')
 dataset['tokenized_title'] = dataset['tokenized_title'].str.replace('\t', ' ')
 dataset['tokenized_title'] = dataset['tokenized_title'].str.replace('-', '')
-dataset['tokenized_title'] = dataset['tokenized_title'].map(lambda x: re.sub('[^A-Za-z0-9]+', ' ', x))
+dataset['tokenized_title'] = dataset['tokenized_title'].str.replace("'s", "subs1")
+dataset['tokenized_title'] = dataset['tokenized_title'].str.replace("n't", " not")
+dataset['tokenized_title'] = dataset['tokenized_title'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
 dataset['tokenized_title'] = dataset.tokenized_title.apply(lambda x: x.lower())
 dataset['tokenized_title'] = dataset.tokenized_title.apply(lambda x: x.split())
 dataset['tokenized_title'] = dataset['tokenized_title'].apply(lambda x: [item for item in x if item not in stop_words])
@@ -60,13 +63,17 @@ counter_2 = 0
 # processing prep & init ends here
 
 
+pre_processing_time = time.time() - start_time_pre_processing
+    
+    
 # logic for iteration starts here
+execution_time_start = time.time()
 for index, row in dataset.iterrows():
     print ("counter_1: ",counter_1)
     word_list = list(row['tokenized_title'])
     for word in word_list:
-#        dataset['temp'] = dataset.tokenized_entry.apply(lambda x: x.count(str(word)))
-        dataset['temp'] = dataset.tokenized_entry_string.apply(lambda x: len(re.findall(r'(?<!\S)'+ word + r'(?!\S)',x, re.IGNORECASE)))
+        dataset['temp'] = dataset.tokenized_entry.apply(lambda x: x.count(str(word)))
+#        dataset['temp'] = dataset.tokenized_entry_string.apply(lambda x: len(re.findall(r'(?<!\S)'+ word + r'(?!\S)',x, re.IGNORECASE)))
         dataset['word_count'] = dataset['word_count'].add(dataset['temp'])
     highest_value_row = abs(np.asscalar(np.int16(dataset['word_count'].idxmax())))
     
@@ -79,11 +86,12 @@ for index, row in dataset.iterrows():
 #        dataset.loc[counter_1,'article_num_sel'] = int(dataset.loc[highest_value_row,'articlenumber'])
     dataset.loc[counter_1,'article_num_sel'] = int(dataset.loc[highest_value_row,'articlenumber'])
     # logic to forcefully match the row for multiple article number starts here
+
+
     dataset.loc[counter_1,'score'] = int(dataset.loc[highest_value_row,'word_count'])
     dataset.loc[counter_1,'total_words'] = len(word_list)
     dataset.loc[counter_1,'match_ratio'] = (int(dataset.loc[highest_value_row,'word_count']))/(len(word_list))
 
-    
     
     # post processing memoery cleaning starts here
     del word_list, word, highest_value_row
@@ -91,24 +99,45 @@ for index, row in dataset.iterrows():
     dataset['temp'] = 0
     counter_1 +=1
     # post processing memoery cleaning ends here
-    
 
-#cleaning the dataset for better view starts here
+    
+execution_time = time.time() - execution_time_start
 dataset = dataset.drop('word_count', 1)
 dataset = dataset.drop('temp', 1)
-print("--- %s seconds ---" % (time.time() - start_time))
-#cleaning the dataset for better view ends here
 # logic for iteration ends here
 
 
 # perofrmance check starts here
 dataset['check'] = np.where(dataset['articlenumber'] == dataset['article_num_sel'], 'yes', 'no')
-dataset['check'].value_counts()
 # perofrmance check ends here
-dataset.to_csv('report1.csv', index=False)
+
+
+#finalizing the file name & path starts here
+i = 0
+while True:
+    out_file_report = str('reports/'  + 'report_no_' + str(i) + '.csv')
+    out_file_performance = str('performance/'  + 'perf_no_' + str(i) + '.txt')
+    if os.path.exists(out_file_report):
+        i+=1
+    else:
+        with open(out_file_report, "w") as empty_csv_report:
+            pass
+        with open(out_file_performance, "w") as empty_txt_performance:
+            pass
+        break
+#finalizing the file name & path ends here
+        
+
+#writing outputs starts here
+dataset.to_csv(out_file_report, index=False)
+filename  = open(out_file_performance,'w')
+sys.stdout = filename
 
 # outlier identification starts here
-dataset['article_num_sel'].value_counts()
+print (dataset['check'].value_counts())
+print (dataset['article_num_sel'].value_counts())
+print ("Pre-processing time: ",pre_processing_time," seconds")
+print ("Execution time: ",execution_time," seconds")
+print ("Time required for one respose: ",round(execution_time/47307,2)," seconds")
 # outlier identification ends here
-
-
+#writing outputs ends here
