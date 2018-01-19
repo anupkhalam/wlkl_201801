@@ -35,7 +35,7 @@ fuzz.ratio("change direct deposit checks", "direct deposit report cas")
 
 dataset['title'].value_counts()
 
-import pandas
+import pandas as pd
 import random
 
 n = 47000 #number of records in file
@@ -44,7 +44,7 @@ filename = "data.txt"
 skip = sorted(random.sample(range(n),n-s))
 skip
 len(skip)
-df = pandas.read_csv(filename, skiprows=skip)
+df = pd.read_csv('reports/fuzzy_report_no_1.csv')
 
 import shutil
 shutil.rmtree('sampling/*')
@@ -75,6 +75,30 @@ skip_reords = total_records - 1000
 del dataset
 skip_rows = sorted(random.sample(range(total_records),skip_reords))
 #sampling logic ends here
+
+
+import re
+
+k= """You may want taxability rules applied to Stocking Units (SKUs) that are not in your SKU / Product Mapping table. If so, there is a way to set up a default map-to that will treat these unknown SKUs as if they were of a particular Transaction Type Code (PGPI).
+To set up a default map-to, please do the following:
+Go to Configuration > SKU / Product Mappings. The SKU / Product Mapping tab opens.
+Click Add Mapping. The Add SKU / Product Mapping dialog displays.
+Enter information in the minimal required fields:
+SKU /        Product Value. '-1' (negative one)
+Transaction Type Code. The mapping that should be applied to all unknown SKUs
+Example: 
+    The Transaction Type Code for General Merchandise (taxable everywhere) is 990101 - General Sales.
+Reason. 'Default Map-to' plus any other pertinent information, such as who is creating the default map-to 
+Start Effective Date and End Effective Date
+Click Save.
+You will then see the SKU / Product Value of -1 appearing in the SKU table, and any unknown SKUs that are passed to CCH SureTax will be treated as if they were the default CCH SureTax Transaction Type Code listed
+"""
+
+
+j = re.sub(r"^\s+", "", k, flags = re.MULTILINE)
+
+j2 = re.sub(r"[\\n\\t\s+]*", "", k)
+
 
 
 

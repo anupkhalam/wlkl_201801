@@ -7,14 +7,11 @@ Created on Wed Dec 20 13:31:17 2017
 """
 
 import time
-import random
 import os
-import glob
 from html.parser import HTMLParser
 import pandas as pd
 import numpy as np
 import re
-import nltk
 from nltk.corpus import stopwords
 import os.path
 from collections import OrderedDict
@@ -57,19 +54,28 @@ dataset = dataset.drop_duplicates(subset=['title'], keep='first')
 #removing duplicates ends here
 
 
+#removing outlier article number rows starts here
+an_to_avoid = [49652,60901]
+dataset = dataset.loc[~dataset['articlenumber'].isin(an_to_avoid)]
+#removing outlier article number rows ends here
+
+
+
 #user_input processing starts here
 dataset['title_string'] = dataset['title'].str.replace('\n', ' ')
 dataset['title_string'] = dataset['title_string'].str.replace('\t', ' ')
 dataset['title_string'] = dataset['title_string'].str.replace('-', '')
-dataset['title_string'] = dataset['title_string'].str.replace("n't", "not")
+dataset['title_string'] = dataset['title_string'].str.replace("n't", ' not')
 dataset['title_string'] = dataset['title_string'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
 dataset['title_string'] = dataset.title_string.apply(lambda x: x.lower())
 dataset['title_string'] = dataset.title_string.apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
 dataset['title_string'] = dataset.title_string.apply(lambda x: ' '.join(OrderedDict((w,w) for w in x.split()).keys()))
+dataset['title_string'] = dataset['title_string'].str.replace('  ', '')
 #user_input processing ends here
 
 
 dataset['diagnostic_number'] = dataset['title_string'].apply(lambda x: (re.findall(r"\D(\d{5})\D", x)) if 'diagnostic' in x else 0)
+dataset['diagnostic_number'] = dataset['title_string'].apply(lambda x: (re.findall(r"\D(\d{5})\D", x)) if 'diag' in x else 0)
 
 
 #html processing starts here
@@ -78,12 +84,13 @@ dataset['parsed_html'].fillna('', inplace=True)
 dataset['parsed_html'] = dataset['parsed_html'].str.replace('\n', ' ')
 dataset['parsed_html'] = dataset['parsed_html'].str.replace('\t', ' ')
 dataset['parsed_html'] = dataset['parsed_html'].str.replace('-', '')
-dataset['parsed_html'] = dataset['parsed_html'].str.replace("n't", "not")
+dataset['parsed_html'] = dataset['parsed_html'].str.replace("n't", " not")
 dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
 dataset['parsed_html'] = dataset['parsed_html'].map(lambda x: re.sub(r'Resolution.+', '', x))
 dataset['parsed_html'] = dataset.parsed_html.apply(lambda x: x.lower())
 dataset['parsed_html'] = dataset.parsed_html.apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
 dataset['parsed_html'] = dataset.parsed_html.apply(lambda x: ' '.join(OrderedDict((w,w) for w in x.split()).keys()))
+dataset['parsed_html'] = dataset['parsed_html'].str.replace('  ', '')
 #html processing ends here
 
 
@@ -94,6 +101,7 @@ dataset['input_method__c'] = dataset['input_method__c'].str.replace('\t', ' ')
 dataset['input_method__c'] = dataset['input_method__c'].str.replace('-', '')
 dataset['input_method__c'] = dataset['input_method__c'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
 dataset['input_method__c'] = dataset.input_method__c.apply(lambda x: x.lower())
+dataset['input_method__c'] = dataset['input_method__c'].str.replace('  ', '')
 #input_method__c processing ends here
 
 
@@ -102,12 +110,13 @@ dataset['summary'].fillna('', inplace=True)
 dataset['summary_string'] = dataset['summary'].str.replace('\n', ' ')
 dataset['summary_string'] = dataset['summary_string'].str.replace('\t', ' ')
 dataset['summary_string'] = dataset['summary_string'].str.replace('-', '')
-dataset['summary_string'] = dataset['summary_string'].str.replace("n't", "not")
+dataset['summary_string'] = dataset['summary_string'].str.replace("n't", " not")
 dataset['summary_string'] = dataset['summary_string'].map(lambda x: re.sub('[^A-Za-z0-9\"\']+', ' ', x))
 dataset['summary_string'] = dataset.summary_string.apply(lambda x: x.lower())
 dataset['summary_string'] = dataset.summary_string.apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
 dataset['summary_string'] = dataset.summary_string.apply(lambda x: ' '.join(OrderedDict((w,w) for w in x.split()).keys()))
 dataset['summary_string'] = dataset.summary_string.apply(lambda x: ' '.join(x.split()[0:25]))
+dataset['summary_string'] = dataset['summary_string'].str.replace('  ', '')
 #summary processing ends here
 
 
@@ -129,6 +138,7 @@ out_file_name_part_1 = 'kb_tit_sum_inp_v_'
 
 #concatenated string processing starts here
 dataset['repo_check'] = dataset['repo_check'].str.replace('xxxnovaluesxxx', '')
+dataset['repo_check'] = dataset.repo_check.apply(lambda x: ' '.join(OrderedDict((w,w) for w in x.split()).keys()))
 dataset = dataset.drop_duplicates(subset=['repo_check'], keep='first')
 dataset['tokenized_repo_check'] = dataset.repo_check.apply(lambda x: x.split())
 dataset['token_length'] = dataset['tokenized_repo_check'].apply(len)
