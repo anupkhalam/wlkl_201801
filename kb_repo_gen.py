@@ -50,10 +50,10 @@ dataset = pd.read_csv('kbarticles_20180116.csv')
 dataset = dataset.iloc[:, [17,21,22,28,29]]
 stop_words = set(stopwords.words("english"))
 
+
 #removing duplicates starts here
 dataset = dataset.drop_duplicates(subset=['articlenumber'], keep='first')
 dataset = dataset.drop_duplicates(subset=['title'], keep='first')
-
 #removing duplicates ends here
 
 

@@ -132,7 +132,7 @@ sys.stdout = filename
 
 # outlier identification starts here
 print (dataset['check'].value_counts())
-print (dataset['article_num_sel'].value_counts())
+print (dataset['article_num_sel'].value_counts().nlargest(5))
 print ("Pre-processing time: ",round(pre_processing_time,3)," seconds")
 print ("Execution time: ",round(execution_time,3)," seconds")
 print ("Time required for one respose: ",round(execution_time/47307,3)," seconds")
