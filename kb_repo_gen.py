@@ -7,6 +7,9 @@ Created on Wed Dec 20 13:31:17 2017
 """
 
 import time
+import random
+import os
+import glob
 from html.parser import HTMLParser
 import pandas as pd
 import numpy as np
@@ -161,6 +164,7 @@ while True:
 dataset_required_loc.to_csv(out_file_name_loc, index=False)
 dataset_required_ser.to_csv(out_file_name_ser, index=False)
 # writing to csv file ends here
+
 
 print ("Execution time: ", round(time.time()-start_time,3), " seconds")
 

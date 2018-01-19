@@ -7,6 +7,7 @@ Created on Wed Jan 17 13:35:30 2018
 """
 
 import time
+import random
 import sys
 import pandas as pd
 import numpy as np
@@ -32,12 +33,20 @@ while True:
 
 #get the latest repo ends here
 
-
+#sampling logic starts here
 dataset = pd.read_csv(in_file_name)
-df01 = dataset[['articlenumber','repo_check']]
+total_records = len(dataset)
+skip_reords = total_records - 1000
+del dataset
+skip_rows = sorted(random.sample(range(1,total_records),skip_reords))
+#sampling logic ends here
+
+
+dataset = pd.read_csv(in_file_name, skiprows=skip_rows)
+df01 = dataset[['articlenumber','repo_check','title_string']]
 df_dict = df01.set_index('repo_check')['articlenumber'].to_dict()
 uq_list = dataset['title_string'].tolist()
-del i,in_file_name,in_file_name_part_1, dataset
+del i,in_file_name,in_file_name_part_1
 
 
 # processing prep & init starts here
@@ -56,8 +65,8 @@ for i in range(len(uq_list)):
     print ("counter_1: ",i)
     matched_question = process.extractOne(uq_list[i],
                                           choices=df01.loc[:, 'repo_check'],
-                                          scorer=fuzz.ratio,
-                                          score_cutoff=50)[0]
+                                          scorer=fuzz.partial_ratio,
+                                          score_cutoff=20)[0]
     df01.loc[i,'article_num_sel'] = int(df_dict[matched_question])
     df01.loc[i,'uq_tested'] = uq_list[i]
     matched_question = ''
